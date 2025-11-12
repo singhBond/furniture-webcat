@@ -193,15 +193,15 @@ export default function CatalogPage() {
       <div className="sticky top-[100px] z-40 bg-white shadow-sm overflow-hidden">
         <div
           ref={scrollRef}
-          className="flex gap-1 overflow-x-auto scrollbar-hide px-4 py-1 select-none " // ← pr-32 shows next card
+          className="flex gap-1 overflow-x-auto scrollbar-hide px-12 py-1 select-none " // ← pr-32 shows next card
           style={{
             scrollSnapType: "none",           // ← No snap → full manual control
             WebkitOverflowScrolling: "touch",
             touchAction: "pan-x",
             overscrollBehaviorX: "contain",
             scrollBehavior: "auto",           // ← Manual scroll only
-            maskImage: "linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%)",
-            WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%)",
+            // maskImage: "linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%)",
+            // WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%)",
           }}
         >
           {categories.map((cat) => {
