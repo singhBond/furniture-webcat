@@ -185,7 +185,7 @@ export default function CatalogPage() {
       <div className="text-center py-6 bg-gradient-to-r from-orange-100 via-amber-100 to-yellow-50">
         <h2 className="text-2xl md:text-4xl font-bold text-orange-700">Premium Living Spaces</h2>
         <p className="text-gray-600 mt-3 max-w-2xl mx-auto text-sm md:text-lg">
-          Handcrafted luxury furniture for modern homes.
+          Handcrafted luxury furnitures products for modern homes.
         </p>
       </div>
 
