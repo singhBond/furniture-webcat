@@ -9,7 +9,7 @@ import { auth } from "@/lib/firebase";
 
 const navItems = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
-  { name: "Featured Collections", href: "/featuredCollection", icon: Menu },
+  // { name: "Featured Collections", href: "/featuredCollection", icon: Menu },
   { name: "New Arrivals", href: "/newArrivals", icon: Menu },
   { name: "Profile", href: "/profile", icon: User },
 ];

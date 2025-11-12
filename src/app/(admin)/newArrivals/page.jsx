@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Upload, X, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { Upload, X, Trash2, ChevronDown, ChevronUp, Star } from "lucide-react";
 
 export default function AdminCatalogPage() {
   /* ---------- STATE ---------- */
@@ -39,6 +39,7 @@ export default function AdminCatalogPage() {
     offerPrice: "",
     description: "",
     files: [],
+    featured: false,
   });
   const [previews, setPreviews] = useState([]);
   const [editing, setEditing] = useState(null);
@@ -155,9 +156,26 @@ export default function AdminCatalogPage() {
     setForm((f) => ({ ...f, files: f.files.filter((_, i) => i !== idx) }));
   };
 
+  /* ---------- TOGGLE FEATURED ---------- */
+  const toggleFeatured = async (cat, productId) => {
+    const catRef = doc(db, "categories", cat);
+    const snap = await getDoc(catRef);
+    const prods = snap.data()?.products || [];
+
+    const updated = prods.map((p) =>
+      p.id === productId ? { ...p, featured: !p.featured } : p
+    );
+
+    await setDoc(
+      catRef,
+      { products: updated, updatedAt: serverTimestamp() },
+      { merge: true }
+    );
+  };
+
   /* ---------- PRODUCT CRUD ---------- */
   const saveProduct = async () => {
-    const { name, dimension, units, mrp, offerPrice, description } = form;
+    const { name, dimension, units, mrp, offerPrice, description, featured } = form;
     if (!name || !dimension || !units || !mrp || !selectedCat) {
       alert("Name, Dimension, Units, MRP and Category are required");
       return;
@@ -174,6 +192,7 @@ export default function AdminCatalogPage() {
         offerPrice: offerPrice ? +offerPrice : null,
         description: description.trim(),
         images,
+        featured: !!featured,
       };
 
       const catRef = doc(db, "categories", selectedCat);
@@ -235,6 +254,7 @@ export default function AdminCatalogPage() {
       mrp: p.mrp,
       offerPrice: p.offerPrice || "",
       description: p.description || "",
+      featured: p.featured || false,
       files: [],
     });
     setPreviews(p.images || []);
@@ -249,6 +269,7 @@ export default function AdminCatalogPage() {
       offerPrice: "",
       description: "",
       files: [],
+      featured: false,
     });
     setPreviews([]);
     setEditing(null);
@@ -405,6 +426,21 @@ export default function AdminCatalogPage() {
             />
           </div>
 
+          {/* Featured Toggle */}
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="featured"
+              checked={form.featured}
+              onChange={(e) => setForm({ ...form, featured: e.target.checked })}
+              className="w-4 h-4 text-amber-600 rounded focus:ring-amber-500"
+            />
+            <Label htmlFor="featured" className="cursor-pointer flex items-center gap-1">
+              <Star className={`h-4 w-4 ${form.featured ? "fill-amber-500 text-amber-500" : "text-gray-400"}`} />
+              Mark as Featured
+            </Label>
+          </div>
+
           {/* ---- MULTI IMAGE ---- */}
           <div>
             <Label>Images (auto-compressed less than 500 KB each)</Label>
@@ -502,36 +538,52 @@ export default function AdminCatalogPage() {
                       {list.map((p) => (
                         <div
                           key={p.id}
-                          className="flex items-center justify-between p-2 bg-white rounded border text-sm"
+                          className="flex items-center justify-between p-3 bg-white rounded-lg border text-sm shadow-sm"
                         >
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-3 flex-1">
                             {p.images?.[0] ? (
                               <img
                                 src={p.images[0]}
                                 alt={p.name}
-                                className="w-9 h-9 object-cover rounded"
+                                className="w-10 h-10 object-cover rounded"
                               />
                             ) : (
-                              <div className="w-9 h-9 bg-gray-200 rounded flex items-center justify-center text-xs">
+                              <div className="w-10 h-10 bg-gray-200 rounded flex items-center justify-center text-xs">
                                 No img
                               </div>
                             )}
-                            <div>
+                            <div className="flex-1">
                               <p className="font-medium">
                                 [{p.id}] {p.name}
                               </p>
                               <p className="text-xs text-gray-600">
-                                {p.dimension} {p.units} • ₹{p.mrp}{" "}
+                                {p.dimension} {p.units} • ₹{p.mrp.toLocaleString()}{" "}
                                 {p.offerPrice && (
                                   <span className="line-through text-red-500">
-                                    ₹{p.offerPrice}
+                                    ₹{p.offerPrice.toLocaleString()}
                                   </span>
                                 )}
                               </p>
                             </div>
                           </div>
 
-                          <div className="flex gap-1">
+                          <div className="flex items-center gap-2">
+                            {/* Featured Star Toggle */}
+                            <button
+                              onClick={() => toggleFeatured(cat, p.id)}
+                              className="p-1 rounded-full hover:bg-amber-100 transition-colors"
+                              title={p.featured ? "Remove from Featured" : "Add to Featured"}
+                            >
+                              <Star
+                                size={18}
+                                className={`${
+                                  p.featured
+                                    ? "fill-amber-500 text-amber-500"
+                                    : "text-gray-400"
+                                }`}
+                              />
+                            </button>
+
                             <Button
                               size="sm"
                               onClick={() => startEdit(cat, p)}

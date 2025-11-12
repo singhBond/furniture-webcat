@@ -141,7 +141,7 @@ export default function CatalogPage() {
     if (cart.length === 0) return;
 
     const total = cart.reduce((sum, i) => sum + i.mrp * i.quantity, 0);
-    const items = cart.map((i) => `*${i.name}* × ${i.quantity} = ₹${i.mrp * i.quantity}`).join("\n");
+    const items = cart.map((i) => `*${i.name}* × ${i.container} = ₹${i.mrp * i.quantity}`).join("\n");
     const newId = `ORD-${Math.floor(100000 + Math.random() * 900000)}`;
     setOrderId(newId);
 
@@ -166,12 +166,12 @@ export default function CatalogPage() {
   const currentProducts = products[activeCategory] || [];
   const totalAmount = cart.reduce((sum, i) => sum + i.mrp * i.quantity, 0);
 
-  // === Scroll Category into View (Smooth) ===
+  // === Manual Scroll to Category (No Smooth) ===
   const scrollToCategory = (cat) => {
     const el = document.getElementById(`cat-${cat}`);
     if (el && scrollRef.current) {
       el.scrollIntoView({
-        behavior: "smooth",
+        behavior: "auto",      // ← Instant jump (manual feel)
         inline: "center",
         block: "nearest",
       });
@@ -189,16 +189,19 @@ export default function CatalogPage() {
         </p>
       </div>
 
-      {/* === TOP NAV: Horizontal Touch-Slideable Category Bar === */}
+      {/* === TOP NAV: Manual Horizontal Scroll with Peek === */}
       <div className="sticky top-[100px] z-40 bg-white shadow-sm overflow-hidden">
         <div
           ref={scrollRef}
-          className="flex gap-3 min-w-max overflow-x-auto scrollbar-hide px-4 py-2 select-none"
+          className="flex gap-1 overflow-x-auto scrollbar-hide px-4 py-1 select-none " // ← pr-32 shows next card
           style={{
-            scrollBehavior: "smooth",
-            WebkitOverflowScrolling: "touch",   // iOS momentum
-            touchAction: "pan-x",               // only horizontal swipe
-            overscrollBehaviorX: "contain",     // no pull-to-refresh
+            scrollSnapType: "none",           // ← No snap → full manual control
+            WebkitOverflowScrolling: "touch",
+            touchAction: "pan-x",
+            overscrollBehaviorX: "contain",
+            scrollBehavior: "auto",           // ← Manual scroll only
+            maskImage: "linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%)",
+            WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%)",
           }}
         >
           {categories.map((cat) => {
@@ -208,11 +211,11 @@ export default function CatalogPage() {
                 key={cat}
                 id={`cat-${cat}`}
                 onClick={() => scrollToCategory(cat)}
-                className={`flex flex-col items-center p-3 rounded-xl cursor-pointer transition-all min-w-[100px] flex-shrink-0 ${
-                  activeCategory === cat
+                className={`flex flex-col items-center p-2 rounded-xl cursor-pointer transition-all min-w-[100px] flex-shrink-0
+                  ${activeCategory === cat
                     ? "bg-amber-100 border border-amber-400 shadow-md"
                     : "hover:bg-gray-50"
-                }`}
+                  }`}
               >
                 <div className="w-14 h-14 rounded-lg overflow-hidden bg-gray-200 shadow-sm">
                   {firstImg ? (
@@ -467,7 +470,7 @@ export default function CatalogPage() {
         </DialogContent>
       </Dialog>
 
-      {/* === Hide Scrollbar === */}
+      {/* === Hide Scrollbar + Fade Effect === */}
       <style jsx>{`
         .scrollbar-hide {
           -ms-overflow-style: none;
