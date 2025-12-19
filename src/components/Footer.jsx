@@ -45,7 +45,7 @@ export default function Footer() {
   };
 
   return (
-    <footer className="bg-[#2b1a0e] text-gray-200">
+    <footer className="bg-[#a16b1e] text-gray-200">
       {/* Top section */}
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-6 py-12 md:grid-cols-4">
         {/* Contact info */}
@@ -73,7 +73,7 @@ export default function Footer() {
                 <Link
                   key={i}
                   href={s.href || "#"}
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-700 hover:bg-amber-600"
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-ayellow-700 hover:bg-yellow-700"
                 >
                   {Icon && <Icon size={18} />}
                 </Link>
@@ -125,7 +125,7 @@ export default function Footer() {
       </div>
 
       {/* Bottom bar */}
-      <div className="border-t border-amber-700">
+      <div className="border-t border-yellow-700">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 py-4 md:flex-row">
           <p className="text-sm">
             © {new Date().getFullYear()}, Furnitures-CatWeb.
@@ -136,7 +136,7 @@ export default function Footer() {
       {/* Scroll-to-top button */}
       <button
         onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-        className="fixed bottom-6 right-6 flex h-10 w-10 items-center justify-center rounded-full bg-amber-700 text-white hover:bg-amber-600"
+        className="fixed bottom-6 right-6 flex h-10 w-10 items-center justify-center rounded-full bg-yellow-700 text-white hover:bg-yellow-700"
         aria-label="Scroll to top"
       >
         ↑

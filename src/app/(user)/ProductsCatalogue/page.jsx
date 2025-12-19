@@ -193,15 +193,15 @@ export default function CatalogPage() {
       <div className="sticky top-[100px] z-40 bg-white shadow-sm overflow-hidden">
         <div
           ref={scrollRef}
-          className="flex gap-1 overflow-x-auto scrollbar-hide px-12 py-1 select-none " // ← pr-32 shows next card
+          className="flex gap-1 overflow-x-auto scrollbar-hide px-8 py-1 select-none " // ← pr-32 shows next card
           style={{
             scrollSnapType: "none",           // ← No snap → full manual control
             WebkitOverflowScrolling: "touch",
             touchAction: "pan-x",
             overscrollBehaviorX: "contain",
             scrollBehavior: "auto",           // ← Manual scroll only
-            // maskImage: "linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%)",
-            // WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%)",
+            maskImage: "linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%)",
+            WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 5%, black 90%, transparent 100%)",
           }}
         >
           {categories.map((cat) => {
@@ -211,7 +211,7 @@ export default function CatalogPage() {
                 key={cat}
                 id={`cat-${cat}`}
                 onClick={() => scrollToCategory(cat)}
-                className={`flex flex-col items-center p-2 rounded-xl cursor-pointer transition-all min-w-[100px] flex-shrink-0
+                className={`flex flex-col items-center p-2 rounded-xl cursor-pointer transition-all min-w-[100px] flex-shrink-0 
                   ${activeCategory === cat
                     ? "bg-amber-100 border border-amber-400 shadow-md"
                     : "hover:bg-gray-50"
@@ -294,7 +294,7 @@ export default function CatalogPage() {
       {/* === Product Dialog === */}
       <Dialog open={!!selectedProduct} onOpenChange={() => setSelectedProduct(null)}>
         {selectedProduct && (
-          <DialogContent className="max-w-full mt-4 md:max-w-2xl p-0 overflow-hidden rounded-none md:rounded-2xl">
+          <DialogContent className="max-w-full mt-4 md:max-w-2xl p-2 overflow-hidden rounded-sm md:rounded-2xl">
             <DialogHeader className="p-2 pb-0">
               <DialogTitle className="text-xl pr-8">{selectedProduct.name}</DialogTitle>
               <button
@@ -345,7 +345,7 @@ export default function CatalogPage() {
 
               <div className="flex-1 space-y-3 px-4 ">
                 <div>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-md text-gray-600">
                     <strong>Size:</strong> {selectedProduct.dimension} {selectedProduct.units}
                   </p>
                   {selectedProduct.description && (

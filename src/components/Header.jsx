@@ -50,7 +50,7 @@ export default function Header() {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-[999] w-full border-b bg-white/95 backdrop-blur">
-      <div className="flex justify-between bg-amber-800 px-6 py-2 text-sm text-white">
+      <div className="flex justify-between bg-yellow-600 px-6 py-2 text-sm text-white">
         <div className="flex space-x-6">
           <Link
             href="/ContactUs#Map"
@@ -62,7 +62,7 @@ export default function Header() {
       </div>
 
       <div className="mx-auto flex max-w-[1400px] items-center justify-between px-6 py-4">
-        <Link href="/" className="text-3xl font-serif text-amber-800">
+        <Link href="/" className="text-3xl font-serif text-yellow-600">
           {shopName}
         </Link>
 
@@ -76,13 +76,13 @@ export default function Header() {
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center space-x-4">
-          <Link href="/" className="px-3 py-2 text-gray-800 hover:text-amber-700">
+          <Link href="/" className="px-3 py-2 text-gray-800 hover:text-yellow-700">
             Home
           </Link>
-          <Link href="ProductsCatalogue" className="px-3 py-2 text-gray-800 hover:text-amber-700">
+          <Link href="ProductsCatalogue" className="px-3 py-2 text-gray-800 hover:text-yellow-700">
             Products
           </Link>
-          <Link href="/ContactUs" className="px-3 py-2 text-gray-800 hover:text-amber-700">
+          <Link href="/ContactUs" className="px-3 py-2 text-gray-800 hover:text-yellow-700">
             Contact Us
           </Link>
         </nav>
@@ -130,21 +130,21 @@ export default function Header() {
           <nav className="flex flex-col items-start px-6 py-4 space-y-3">
             <Link
               href="/"
-              className="text-gray-800 hover:text-amber-700"
+              className="text-gray-800 hover:text-yellow-700"
               onClick={() => setMobileMenuOpen(false)}
             >
               Home
             </Link>
             <Link
               href="ProductsCatalogue"
-              className="text-gray-800 hover:text-amber-700"
+              className="text-gray-800 hover:text-yellow-700"
               onClick={() => setMobileMenuOpen(false)}
             >
               Products
             </Link>
             <Link
               href="/ContactUs"
-              className="text-gray-800 hover:text-amber-700"
+              className="text-gray-800 hover:text-yellow-700"
               onClick={() => setMobileMenuOpen(false)}
             >
               Contact Us

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react"; // ← added useRef
 import { db } from "@/lib/firebase";
 import {
   collection,
@@ -44,7 +44,12 @@ export default function AdminCatalogPage() {
   const [previews, setPreviews] = useState([]);
   const [editing, setEditing] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [openCats, setOpenCats] = useState({}); // accordion state
+  const [openCats, setOpenCats] = useState({});
+
+  // New refs for drag and drop
+  const fileInputRef = useRef(null);
+  const dropZoneRef = useRef(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   /* ---------- REAL-TIME LISTEN ---------- */
   useEffect(() => {
@@ -140,8 +145,8 @@ export default function AdminCatalogPage() {
       reader.readAsDataURL(file);
     });
 
-  const handleImageChange = async (e) => {
-    const files = Array.from(e.target.files);
+  // Unified handler for both click and drag-and-drop
+  const processFiles = async (files) => {
     if (!files.length) return;
 
     const compressed = await Promise.all(files.map(compressImage));
@@ -149,6 +154,41 @@ export default function AdminCatalogPage() {
 
     setForm((f) => ({ ...f, files: [...f.files, ...compressed] }));
     setPreviews((p) => [...p, ...base64]);
+  };
+
+  const handleImageChange = async (e) => {
+    const files = Array.from(e.target.files);
+    await processFiles(files);
+    // Reset input so same file can be selected again
+    e.target.value = "";
+  };
+
+  const handleDrop = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = Array.from(e.dataTransfer.files).filter((f) =>
+      f.type.startsWith("image/")
+    );
+    if (files.length === 0) {
+      alert("Please drop only image files.");
+      return;
+    }
+
+    await processFiles(files);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
   };
 
   const removeImage = (idx) => {
@@ -205,7 +245,6 @@ export default function AdminCatalogPage() {
           p.id === editing ? { ...p, ...productData } : p
         );
       } else {
-        // === UNIQUE ID ACROSS ALL CATEGORIES STARTING FROM 101 ===
         let maxId = 100;
         Object.values(products).forEach((catProducts) => {
           catProducts.forEach((p) => {
@@ -382,7 +421,7 @@ export default function AdminCatalogPage() {
               <Input
                 value={form.dimension}
                 onChange={(e) => setForm({ ...form, dimension: e.target.value })}
-                placeholder="6x3x2.5"
+                placeholder="L x W x H"
               />
             </div>
             <div>
@@ -390,14 +429,14 @@ export default function AdminCatalogPage() {
               <Input
                 value={form.units}
                 onChange={(e) => setForm({ ...form, units: e.target.value })}
-                placeholder="ft"
+                placeholder="eg: ft, inch, cm, m, etc"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>MRP (₹)</Label>
+              <Label>Offer Price (₹)</Label>
               <Input
                 type="number"
                 value={form.mrp}
@@ -406,7 +445,7 @@ export default function AdminCatalogPage() {
               />
             </div>
             <div>
-              <Label>Offer Price (₹)</Label>
+              <Label>MRP  (₹)</Label>
               <Input
                 type="number"
                 value={form.offerPrice}
@@ -441,7 +480,7 @@ export default function AdminCatalogPage() {
             </Label>
           </div>
 
-          {/* ---- MULTI IMAGE ---- */}
+          {/* ---- MULTI IMAGE WITH DRAG & DROP ---- */}
           <div>
             <Label>Images (auto-compressed less than 500 KB each)</Label>
 
@@ -465,22 +504,33 @@ export default function AdminCatalogPage() {
                 </div>
               ))}
 
+              {/* Drag & Drop + Click Zone */}
               <div
-                className="border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:border-teal-500"
-                onClick={() =>
-                  document.getElementById("add-multi-image")?.click()
-                }
+                ref={dropZoneRef}
+                className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center text-center cursor-pointer transition-all
+                  ${isDragging 
+                    ? "border-teal-500 bg-teal-50" 
+                    : "border-gray-300 hover:border-teal-500"
+                  }`}
+                onClick={() => fileInputRef.current?.click()}
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
               >
-                <Upload className="h-8 w-8 text-gray-400" />
+                <Upload className={`h-8 w-8 ${isDragging ? "text-teal-600" : "text-gray-400"}`} />
                 <p className="text-sm text-gray-600 mt-2">
                   {previews.length
                     ? "Upload more images"
-                    : "Click or drag to upload"}
+                    : "Click or drag images here"}
                 </p>
+                {isDragging && (
+                  <p className="text-xs text-teal-600 mt-1">Drop to upload</p>
+                )}
               </div>
             </div>
 
             <input
+              ref={fileInputRef}
               id="add-multi-image"
               type="file"
               accept="image/*"
@@ -568,7 +618,6 @@ export default function AdminCatalogPage() {
                           </div>
 
                           <div className="flex items-center gap-2">
-                            {/* Featured Star Toggle */}
                             <button
                               onClick={() => toggleFeatured(cat, p.id)}
                               className="p-1 rounded-full hover:bg-amber-100 transition-colors"
