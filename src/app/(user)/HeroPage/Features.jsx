@@ -1,33 +1,26 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import { useRouter } from "next/navigation";   // ← Added
 import { ChevronLeft, ChevronRight, Star } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, doc, onSnapshot } from "firebase/firestore";
 
 export default function Features() {
+  const router = useRouter();   // ← Added
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [marquee, setMarquee] = useState([]);
   const [hovered, setHovered] = useState(null);
   const [current, setCurrent] = useState(0);
+  const [loading, setLoading] = useState(true);   // ← Added
   const visible = 4;
   const intervalRef = useRef(null);
 
-  // Helper: Return valid image src (supports base64, http, https, /assets)
+  // Helper: Return valid image src
   const getImageSrc = (image) => {
     if (!image) return "/placeholder.png";
-
-    // If it's base64 (data:image/...)
-    if (typeof image === "string" && image.startsWith("data:image/")) {
-      return image;
-    }
-
-    // If it's a relative or absolute URL
-    if (typeof image === "string" && (image.startsWith("http") || image.startsWith("/"))) {
-      return image;
-    }
-
-    // Fallback
+    if (typeof image === "string" && image.startsWith("data:image/")) return image;
+    if (typeof image === "string" && (image.startsWith("http") || image.startsWith("/"))) return image;
     return "/placeholder.png";
   };
 
@@ -41,21 +34,23 @@ export default function Features() {
     });
     unsubscribers.push(unsubMarquee);
 
-    // All categories → collect featured products
+    // All categories → collect featured products with category info
     const unsubCategories = onSnapshot(collection(db, "categories"), (snap) => {
       const featured = [];
 
       snap.forEach((catDoc) => {
         const products = catDoc.data().products || [];
-        const featuredInCat = products.filter((p) => p.featured);
+        const featuredInCat = products
+          .filter((p) => p.featured)
+          .map((p) => ({ ...p, category: catDoc.id }));   // ← Added category
         featured.push(...featuredInCat);
       });
 
-      // Sort by ID (newest first)
       featured.sort((a, b) => (b.id || 0) - (a.id || 0));
-
       setFeaturedProducts(featured);
+      setLoading(false);   // ← Stop loader
     });
+
     unsubscribers.push(unsubCategories);
 
     return () => unsubscribers.forEach((unsub) => unsub());
@@ -101,6 +96,27 @@ export default function Features() {
     return () => clearInterval(intervalRef.current);
   }, [hovered, featuredProducts.length]);
 
+  // Handle Click on Featured Item
+  const handleFeaturedClick = (product) => {
+    if (product.category) {
+      router.push(`/ProductsCatalogue?category=${encodeURIComponent(product.category)}`);
+    }
+  };
+
+  // Loader
+  if (loading) {
+    return (
+      <section className="py-16 bg-white">
+        <div className="mx-auto max-w-6xl px-6 text-center">
+          <div className="flex justify-center items-center gap-3 text-amber-600">
+            <div className="w-6 h-6 border-4 border-amber-200 border-t-amber-600 rounded-full animate-spin"></div>
+            <p className="text-lg">Loading Featured Collections...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   if (featuredProducts.length === 0) {
     return null;
   }
@@ -133,6 +149,7 @@ export default function Features() {
                     className="flex-shrink-0 w-1/2 md:w-1/4 flex justify-center"
                     onMouseEnter={() => setHovered(idx)}
                     onMouseLeave={() => setHovered(null)}
+                    onClick={() => handleFeaturedClick(p)}   // ← Added Click Handler
                   >
                     <div className="group relative h-56 w-56 cursor-pointer rounded-full border border-gray-200 overflow-hidden transition-transform hover:scale-105">
                       {/* Image */}
@@ -146,14 +163,14 @@ export default function Features() {
                       />
 
                       {/* Featured Badge */}
-                      <div className="absolute top-2 right-2 bg-amber-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="absolute top-14 right-16 bg-amber-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Star size={12} className="fill-current" />
                         Featured
                       </div>
 
                       {/* Hover Overlay */}
                       <div
-                        className={`absolute inset-0 flex flex-col items-center justify-center rounded-full bg-black/60 text-white transition-opacity duration-500 ${
+                        className={`absolute inset-0 flex flex-col items-center justify-center rounded-full bg-black/40 text-white transition-opacity duration-500 ${
                           hovered === idx ? "opacity-100" : "opacity-0"
                         }`}
                       >
@@ -210,12 +227,8 @@ export default function Features() {
           animation: marquee 25s linear infinite;
         }
         @keyframes marquee {
-          0% {
-            transform: translateX(100%);
-          }
-          100% {
-            transform: translateX(-100%);
-          }
+          0% { transform: translateX(100%); }
+          100% { transform: translateX(-100%); }
         }
       `}</style>
     </section>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { db } from "@/lib/firebase";
 import { collection, onSnapshot, query } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,9 @@ import {
   ChevronRight,
   X,
 } from "lucide-react";
+
+// === Furniture Icons for Loader ===
+import { Sofa, Armchair, BedDouble, Table } from "lucide-react";
 
 // === Read More Component ===
 const DescriptionWithReadMore = ({ text }) => {
@@ -46,8 +50,52 @@ const DescriptionWithReadMore = ({ text }) => {
   );
 };
 
+// === Furniture Loader Component ===
+const FurnitureLoader = () => {
+  const icons = [Sofa, Armchair, BedDouble, Table];
+  const colors = ["text-amber-600", "text-teal-600", "text-orange-600", "text-emerald-600"];
+
+  return (
+    <div className="fixed inset-0 bg-white/90 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="relative w-48 h-48">
+        <div className="absolute inset-0 animate-ping">
+          <div className="w-full h-full rounded-full border-4 border-amber-200 opacity-20" />
+        </div>
+
+        {icons.map((Icon, i) => {
+          const angle = (i * 90) - 90;
+          const x = 50 + 40 * Math.cos((angle * Math.PI) / 180);
+          const y = 50 + 40 * Math.sin((angle * Math.PI) / 180);
+
+          return (
+            <div
+              key={i}
+              className="absolute animate-spin-slow"
+              style={{
+                top: `${y}%`,
+                left: `${x}%`,
+                transform: "translate(-50%, -50%)",
+                animationDelay: `${i * 0.2}s`,
+              }}
+            >
+              <Icon size={36} className={`${colors[i]} opacity-80 drop-shadow-lg`} />
+            </div>
+          );
+        })}
+
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
+          <p className="text-xl font-bold text-amber-700">Loading...</p>
+          <p className="text-sm text-gray-600 mt-1"> Get Ready to Explore premium Furniture</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // === Main Catalog Page ===
 export default function CatalogPage() {
+  const searchParams = useSearchParams();
+
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState({});
   const [activeCategory, setActiveCategory] = useState("");
@@ -86,6 +134,26 @@ export default function CatalogPage() {
 
     return () => unsub();
   }, []);
+
+  // === Handle Search Redirection (?category=...) ===
+  useEffect(() => {
+    const urlCategory = searchParams.get("category");
+    if (urlCategory && categories.length > 0) {
+      if (categories.includes(urlCategory)) {
+        setActiveCategory(urlCategory);
+        setTimeout(() => {
+          const el = document.getElementById(`cat-${urlCategory}`);
+          if (el && scrollRef.current) {
+            el.scrollIntoView({
+              behavior: "smooth",
+              inline: "center",
+              block: "nearest",
+            });
+          }
+        }, 300);
+      }
+    }
+  }, [searchParams, categories]);
 
   // === Cart Persistence ===
   useEffect(() => {
@@ -141,7 +209,7 @@ export default function CatalogPage() {
     if (cart.length === 0) return;
 
     const total = cart.reduce((sum, i) => sum + i.mrp * i.quantity, 0);
-    const items = cart.map((i) => `*${i.name}* × ${i.container} = ₹${i.mrp * i.quantity}`).join("\n");
+    const items = cart.map((i) => `*${i.name}* × ${i.quantity} = ₹${i.mrp * i.quantity}`).join("\n");
     const newId = `ORD-${Math.floor(100000 + Math.random() * 900000)}`;
     setOrderId(newId);
 
@@ -166,12 +234,12 @@ export default function CatalogPage() {
   const currentProducts = products[activeCategory] || [];
   const totalAmount = cart.reduce((sum, i) => sum + i.mrp * i.quantity, 0);
 
-  // === Manual Scroll to Category (No Smooth) ===
+  // === Manual Scroll to Category ===
   const scrollToCategory = (cat) => {
     const el = document.getElementById(`cat-${cat}`);
     if (el && scrollRef.current) {
       el.scrollIntoView({
-        behavior: "auto",      // ← Instant jump (manual feel)
+        behavior: "auto",
         inline: "center",
         block: "nearest",
       });
@@ -179,8 +247,12 @@ export default function CatalogPage() {
     setActiveCategory(cat);
   };
 
+  if (categories.length === 0) {
+    return <FurnitureLoader />;
+  }
+
   return (
-    <section className="min-h-screen mt-24 bg-gradient-to-b from-amber-50 to-white">
+    <section className="min-h-screen mt- bg-gradient-to-b from-amber-50 to-white">
       {/* Header */}
       <div className="text-center py-6 bg-gradient-to-r from-orange-100 via-amber-100 to-yellow-50">
         <h2 className="text-2xl md:text-4xl font-bold text-orange-700">Premium Living Spaces</h2>
@@ -189,17 +261,17 @@ export default function CatalogPage() {
         </p>
       </div>
 
-      {/* === TOP NAV: Manual Horizontal Scroll with Peek === */}
-      <div className="sticky top-[100px] z-40 bg-white shadow-sm overflow-hidden">
+      {/* === TOP NAV === */}
+      <div className="sticky top-[6px] z-40 bg-white shadow-sm overflow-hidden">
         <div
           ref={scrollRef}
-          className="flex gap-1 overflow-x-auto scrollbar-hide px-8 py-1 select-none " // ← pr-32 shows next card
+          className="flex gap-1 overflow-x-auto scrollbar-hide px-8 py-1 select-none"
           style={{
-            scrollSnapType: "none",           // ← No snap → full manual control
+            scrollSnapType: "none",
             WebkitOverflowScrolling: "touch",
             touchAction: "pan-x",
             overscrollBehaviorX: "contain",
-            scrollBehavior: "auto",           // ← Manual scroll only
+            scrollBehavior: "auto",
             maskImage: "linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%)",
             WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 5%, black 90%, transparent 100%)",
           }}
@@ -212,19 +284,11 @@ export default function CatalogPage() {
                 id={`cat-${cat}`}
                 onClick={() => scrollToCategory(cat)}
                 className={`flex flex-col items-center p-2 rounded-xl cursor-pointer transition-all min-w-[100px] flex-shrink-0 
-                  ${activeCategory === cat
-                    ? "bg-amber-100 border border-amber-400 shadow-md"
-                    : "hover:bg-gray-50"
-                  }`}
+                  ${activeCategory === cat ? "bg-amber-100 border border-amber-400 shadow-md" : "hover:bg-gray-50"}`}
               >
                 <div className="w-14 h-14 rounded-lg overflow-hidden bg-gray-200 shadow-sm">
                   {firstImg ? (
-                    <img
-                      src={firstImg}
-                      alt={cat}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                    />
+                    <img src={firstImg} alt={cat} className="w-full h-full object-cover" loading="lazy" />
                   ) : (
                     <div className="w-full h-full bg-gray-200" />
                   )}
@@ -259,11 +323,7 @@ export default function CatalogPage() {
                 >
                   <div className="relative h-56 bg-gray-100">
                     {firstImg ? (
-                      <img
-                        src={firstImg}
-                        alt={p.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                      />
+                      <img src={firstImg} alt={p.name} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400 text-xs">
                         No Image
@@ -297,12 +357,6 @@ export default function CatalogPage() {
           <DialogContent className="max-w-full mt-4 md:max-w-2xl p-2 overflow-hidden rounded-sm md:rounded-2xl">
             <DialogHeader className="p-2 pb-0">
               <DialogTitle className="text-xl pr-8">{selectedProduct.name}</DialogTitle>
-              <button
-                onClick={() => setSelectedProduct(null)}
-                className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
-              >
-                {/* <X size={20} /> */}
-              </button>
             </DialogHeader>
 
             <div className="flex flex-col md:flex-row gap-2 p-1 pt-0">
@@ -321,16 +375,10 @@ export default function CatalogPage() {
                       )}
                       {imgs.length > 1 && (
                         <>
-                          <button
-                            onClick={() => navigateImage("prev")}
-                            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full"
-                          >
+                          <button onClick={() => navigateImage("prev")} className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full">
                             <ChevronLeft size={20} />
                           </button>
-                          <button
-                            onClick={() => navigateImage("next")}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full"
-                          >
+                          <button onClick={() => navigateImage("next")} className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full">
                             <ChevronRight size={20} />
                           </button>
                           <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/60 text-white text-xs px-2 py-1 rounded-full">
@@ -343,7 +391,7 @@ export default function CatalogPage() {
                 })()}
               </div>
 
-              <div className="flex-1 space-y-3 px-4 ">
+              <div className="flex-1 space-y-3 px-4">
                 <div>
                   <p className="text-md text-gray-600">
                     <strong>Size:</strong> {selectedProduct.dimension} {selectedProduct.units}
@@ -368,16 +416,10 @@ export default function CatalogPage() {
                 </div>
 
                 <div className="flex gap-3">
-                  <Button
-                    className="flex-1 bg-amber-500 hover:bg-amber-600"
-                    onClick={() => addToCart(selectedProduct)}
-                  >
+                  <Button className="flex-1 bg-amber-500 hover:bg-amber-600" onClick={() => addToCart(selectedProduct)}>
                     Add to Cart
                   </Button>
-                  <Button
-                    className="flex-1 bg-teal-600 hover:bg-teal-700"
-                    onClick={() => contactProduct(selectedProduct)}
-                  >
+                  <Button className="flex-1 bg-teal-600 hover:bg-teal-700" onClick={() => contactProduct(selectedProduct)}>
                     Contact to Buy
                   </Button>
                 </div>
@@ -390,7 +432,7 @@ export default function CatalogPage() {
       {/* === Floating Cart === */}
       <div
         onClick={() => setCartOpen(true)}
-        className="fixed bottom-6 right-6 bg-teal-600 hover:bg-teal-700 text-white p-4 rounded-full shadow-lg cursor-pointer z-50"
+        className="fixed bottom-20 right-6 bg-teal-600 hover:bg-teal-700 text-white p-4 rounded-full shadow-lg cursor-pointer z-50"
       >
         <ShoppingCart size={26} />
         {cart.length > 0 && (
@@ -478,6 +520,13 @@ export default function CatalogPage() {
         }
         .scrollbar-hide::-webkit-scrollbar {
           display: none;
+        }
+        @keyframes spin-slow {
+          from { transform: translate(-50%, -50%) rotate(0deg); }
+          to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+        .animate-spin-slow {
+          animation: spin-slow 12s linear infinite;
         }
       `}</style>
     </section>
